@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chemistry Detectives Salt Prep Helper</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap');
+    :root {
+      --bg:#f4e6d7; --panel:#fffaf2; --card:#ffffff; --ink:#242424; --muted:#55504b;
+      --accent:#ffd24a; --orange:#f59e0b; --red:#ef4444; --green:#4ade80;
+      --pink:#e15b93; --purple:#9aaaf7; --soft-green:#dcfce7; --soft-yellow:#fef9c3;
+      --soft-red:#fee2e2; --soft-blue:#eef2ff; --border:#242424;
+      --radius:12px; --shadow:5px 5px 0 #242424; --shadow-small:3px 3px 0 #242424;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; font-family:Arial, Helvetica, sans-serif; color:var(--ink);
+      background-color:var(--bg); background-image:radial-gradient(rgba(36,36,36,.16) 1px, transparent 1.2px);
+      background-size:18px 18px; padding:24px; display:flex; justify-content:center;
+    }
+    .app { width:min(100%,1180px); }
+    header { display:flex; gap:18px; align-items:stretch; margin-bottom:16px; }
+    .title-block,.stats,.main-panel,.card { background:var(--panel); border:3px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .title-block { flex:1; padding:20px 24px; }
+    h1 { margin:0; font-family:'Fredoka',Arial,sans-serif; font-size:clamp(2rem,5vw,4.4rem); line-height:1; letter-spacing:.025em; text-transform:uppercase; white-space:nowrap; }
+    .creator { margin:8px 0 0; color:var(--muted); font-family:'Fredoka',Arial,sans-serif; font-weight:600; }
+    .stats { min-width:220px; padding:16px 18px; background:var(--purple); align-self:stretch; display:grid; place-items:center; text-align:center; }
+    .stats strong { display:block; font-size:2rem; line-height:1; }
+    .stats span { font-weight:900; color:var(--ink); text-transform:uppercase; font-size:.82rem; }
+    .main-panel { padding:18px 22px 30px; background:rgba(255,250,242,.96); overflow:visible; }
+    .tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+    button, select, input { font:inherit; }
+    button {
+      border:3px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-small); background:var(--card);
+      color:var(--ink); padding:11px 14px; font-weight:900; text-transform:uppercase; cursor:pointer;
+      transition:transform .08s ease, box-shadow .08s ease, background .15s ease;
+    }
+    button:hover { background:var(--accent); }
+    button:active { transform:translate(3px,3px); box-shadow:0 0 0 var(--border); }
+    button.primary,.tab.active { background:var(--accent); }
+    button.good { background:var(--green); }
+    button.pink { background:var(--pink); }
+    button.purple { background:var(--purple); }
+    button:disabled { cursor:not-allowed; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .grid { display:grid; gap:14px; }
+    .card { box-shadow:var(--shadow-small); padding:16px; background:var(--card); }
+    .game-grid,.score-layout { grid-template-columns:minmax(290px,390px) 1fr; align-items:start; }
+    h2,h3 { font-family:'Fredoka',Arial,sans-serif; margin:0 0 10px; letter-spacing:.02em; }
+    h2 { font-size:1.55rem; } h3 { font-size:1.18rem; }
+    label { display:block; font-weight:900; text-transform:uppercase; font-size:.82rem; margin-bottom:6px; }
+    .field { min-width:0; }
+    select,input[type='text'],input[type='number'] { width:100%; display:block; border:3px solid var(--border); border-radius:var(--radius); background:var(--panel); padding:8px 10px; font-weight:800; min-height:42px; line-height:1.2; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:end; }
+    .field + .field,.form-row + .form-row { margin-top:12px; }
+    .tiny { font-size:.78rem; color:var(--muted); font-weight:800; line-height:1.35; }
+
+    .salt-display { margin-top:14px; padding:20px 16px 18px; background:var(--accent); border:3px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-small); text-align:center; overflow:visible; }
+    .salt-display .formula,.quiz-formula,.learn-formula { font-size:clamp(2.4rem,7vw,4.5rem); font-family:'Fredoka',Arial,sans-serif; line-height:1.08; padding-bottom:4px; }
+    .badge-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:6px; }
+    .badge { display:inline-flex; align-items:center; justify-content:center; min-height:30px; border:2px solid var(--border); border-radius:999px; padding:5px 10px; background:var(--panel); font-weight:900; font-size:.82rem; line-height:1.15; }
+    .badge.good { background:var(--soft-green); } .badge.bad { background:var(--soft-red); } .badge.mid { background:var(--soft-yellow); }
+
+    .method-image-wrap { display:grid; justify-items:center; gap:8px; margin-top:12px; }
+    .method-image-wrap strong { text-transform:uppercase; font-size:.78rem; color:var(--muted); }
+    .method-image { width:min(100%,250px); aspect-ratio:1/1; object-fit:cover; border:3px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-small); background:var(--panel); }
+
+    .answer-list { display:grid; gap:0; margin:0; padding:0; list-style:none; }
+    .answer-list li { display:grid; grid-template-columns:170px 1fr; gap:12px; padding:10px 0; border-bottom:2px solid rgba(36,36,36,.18); align-items:start; }
+    .answer-list li:last-child { border-bottom:0; }
+    .answer-list strong { text-transform:uppercase; font-size:.75rem; color:var(--muted); line-height:1.2; }
+    .answer-list span { line-height:1.4; overflow-wrap:anywhere; }
+    .answer-list .highlight,.answer-list .reagent,.answer-list .equation { border:0; border-radius:0; padding:0; margin:0; background:transparent; }
+
+    .player-list { display:grid; gap:8px; margin-top:10px; }
+    .player-row { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; }
+    .round-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .leaderboard { display:grid; gap:10px; }
+    .bar-card { border:2px solid var(--border); border-radius:var(--radius); background:var(--panel); padding:10px; }
+    .bar-head { display:flex; justify-content:space-between; gap:8px; font-weight:900; margin-bottom:6px; }
+    .bar-track { height:20px; background:#fff; border:2px solid var(--border); border-radius:999px; overflow:hidden; }
+    .bar-fill { height:100%; background:var(--orange); width:0%; transition:width .2s ease; }
+    .table-wrap { overflow:auto; border:3px solid var(--border); border-radius:var(--radius); background:var(--card); box-shadow:var(--shadow-small); }
+    table { border-collapse:collapse; width:100%; min-width:760px; }
+    th,td { border:2px solid var(--border); padding:8px; text-align:center; vertical-align:middle; }
+    th { background:var(--accent); font-weight:900; text-transform:uppercase; font-size:.78rem; }
+    td:first-child, th:first-child { position:sticky; left:0; background:var(--panel); z-index:1; font-weight:900; }
+    input[type='checkbox'] { width:25px; height:25px; accent-color:var(--orange); cursor:pointer; }
+
+    .quiz-layout,.learn-layout { display:grid; grid-template-columns:minmax(280px,360px) 1fr; gap:14px; align-items:start; }
+    .quiz-tracker { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-weight:900; text-transform:uppercase; margin-bottom:12px; }
+    .quiz-salt,.learn-salt { margin:10px 0 12px; padding:18px; background:var(--accent); border:3px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-small); text-align:center; }
+    .quiz-name { margin-top:8px; font-weight:900; color:var(--muted); }
+    .method-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:12px 0; }
+    .method-card { padding:8px; background:var(--panel); text-transform:none; min-height:0; display:flex; align-items:stretch; justify-content:center; }
+    .method-card img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; display:block; pointer-events:none; }
+    .method-card:hover { transform:translate(-1px,-1px); box-shadow:5px 5px 0 var(--border); }
+    .method-card.selected { background:var(--soft-green); transform:scale(1.03); }
+    .method-card.faded { opacity:.32; filter:grayscale(.8); }
+    .method-card.wrong-pick { background:var(--soft-red); animation:shake .24s linear 2; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 35%{transform:translateX(-5px)} 70%{transform:translateX(5px)} }
+    .quiz-feedback,.flow-message { margin-top:12px; border:3px solid var(--border); border-radius:var(--radius); padding:12px; font-weight:900; line-height:1.35; display:none; }
+    .quiz-feedback.correct,.flow-message.correct { display:block; background:var(--soft-green); }
+    .quiz-feedback.wrong,.flow-message.wrong { display:block; background:var(--soft-red); }
+    .quiz-feedback.info,.flow-message.info { display:block; background:#e0f2fe; }
+    .reagent-selects { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; margin-top:12px; }
+    .quiz-answer-panel { display:grid; gap:10px; grid-template-columns:1fr 1fr; margin-top:12px; }
+    .explain-card,.flow-detail { border:2px solid var(--border); border-radius:var(--radius); background:var(--panel); padding:12px; line-height:1.4; }
+    .explain-card strong,.flow-detail strong { display:block; text-transform:uppercase; font-size:.75rem; color:var(--muted); margin-bottom:5px; }
+    .learn-detail-grid { display:grid; grid-template-columns:1fr 150px; gap:12px; align-items:start; }
+    .learn-detail-grid .method-image { width:150px; height:150px; justify-self:end; object-fit:cover; }
+
+    .mini-selectors { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .learn-actions,.quiz-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .flowchart { display:grid; gap:10px; margin-top:14px; }
+    .flow-row { display:grid; justify-items:center; gap:10px; }
+    .flow-row.two { grid-template-columns:1fr 1fr; align-items:stretch; }
+    .flow-branches { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:start; }
+    .flow-branch { display:grid; gap:10px; align-items:start; }
+    .flow-branch .flow-row.two { width:100%; }
+    .flow-arrow { text-align:center; font-weight:900; color:var(--muted); display:grid; place-items:center; min-height:18px; }
+    .branch-label { text-align:center; font-weight:900; color:var(--muted); }
+    .branch-labels { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:center; }
+    .flow-node { width:100%; border:3px solid var(--border); border-radius:var(--radius); background:var(--card); padding:12px; box-shadow:var(--shadow-small); opacity:.46; transition:.15s ease; }
+    .flow-node strong { display:block; font-family:'Fredoka',Arial,sans-serif; font-size:1.05rem; line-height:1.15; }
+    .flow-node p { margin:6px 0 0; color:var(--muted); font-weight:800; font-size:.86rem; line-height:1.35; }
+    .flow-options { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .flow-options button { flex:1; min-width:84px; padding:8px 10px; font-size:.82rem; }
+    .flow-options.hidden { display:none; }
+    .hint-panel { display:none; margin-top:12px; border:2px solid var(--border); border-radius:var(--radius); background:var(--soft-blue); padding:12px; box-shadow:var(--shadow-small); line-height:1.4; }
+    .hint-panel h3 { margin:0 0 8px; font-size:1rem; }
+    .hint-panel ol { margin:0; padding-left:20px; }
+    .hint-panel ul { margin:6px 0 12px; padding-left:18px; }
+    .hint-panel li { margin:4px 0; }
+    .node-tag { display:inline-block; border:2px solid var(--border); border-radius:999px; padding:3px 8px; background:var(--accent); font-weight:900; font-size:.72rem; margin-bottom:8px; }
+    .flow-node.active { opacity:1; transform:translate(-1px,-1px); box-shadow:5px 5px 0 var(--border); }
+    .flow-node.correct { background:var(--soft-green); } .flow-node.wrong { background:var(--soft-red); opacity:1; }
+    .flow-node.final.precipitation { background:#fef3c7; } .flow-node.final.titration { background:#dcfce7; } .flow-node.final.excess { background:#e0f2fe; }
+    @media (max-width:720px) { .flow-branches { grid-template-columns:1fr; } }
+    .flow-node.dim { opacity:.2; filter:grayscale(.8); }
+    .flow-node-img { width:110px; max-width:45%; aspect-ratio:1/1; object-fit:cover; border:2px solid var(--border); border-radius:10px; box-shadow:2px 2px 0 var(--border); float:right; margin:0 0 6px 10px; }
+
+    .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--accent); border:3px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 16px; font-weight:900; display:none; z-index:20; }
+    .toast.show { display:block; animation:pop .18s ease both; }
+    @keyframes pop { from { transform:translateX(-50%) scale(.92); } to { transform:translateX(-50%) scale(1); } }
+
+    @media (max-width:980px) { header,.game-grid,.score-layout,.quiz-layout,.learn-layout { grid-template-columns:1fr; flex-direction:column; } .stats { min-width:0; } h1 { font-size:clamp(1.65rem,8vw,3rem); } body { padding:10px; } }
+    @media (max-width:700px) { .tabs,.form-row,.round-controls,.reagent-selects,.mini-selectors,.flow-row.two,.quiz-answer-panel,.method-cards,.learn-detail-grid { grid-template-columns:1fr; } .title-block,.main-panel { padding:12px; } button { font-size:.82rem; padding:9px; } .answer-list li { grid-template-columns:1fr; gap:5px; } .flow-node-img { float:none; display:block; max-width:160px; width:100%; margin:4px 0 8px; } .learn-detail-grid .method-image { justify-self:start; width:150px; height:150px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <section class="title-block">
+        <h1>CHEMISTRY DETECTIVES</h1>
+        <p class="creator">Created by Mr. Jansen Tan</p>
+      </section>
+      <section class="stats" aria-live="polite">
+        <div><strong id="topScore">0</strong><span id="topScoreLabel">Top score</span></div>
+      </section>
+    </header>
+
+    <section class="main-panel">
+      <nav class="tabs" aria-label="App functions">
+        <button class="tab active" data-tab="gamePanel">Game Mode</button>
+        <button class="tab" data-tab="quizPanel">Quiz Mode</button>
+        <button class="tab" data-tab="learnPanel">Learn Mode</button>
+      </nav>
+
+      <section id="gamePanel" class="panel active">
+        <div class="grid game-grid">
+          <div class="card">
+            <h2>Check the salt</h2>
+            <div class="form-row">
+              <div class="field"><label for="cationSelect">Cation card</label><select id="cationSelect"></select></div>
+              <div class="field"><label for="anionSelect">Anion card</label><select id="anionSelect"></select></div>
+            </div>
+            <div class="salt-display">
+              <div class="tiny">Salt formed</div>
+              <div id="formulaDisplay" class="formula">-</div>
+              <div class="badge-row">
+                <span id="methodBadge" class="badge">Method</span>
+                <span id="solubilityBadge" class="badge">Solubility</span>
+              </div>
+            </div>
+            <div class="method-image-wrap">
+              <strong>Correct method card</strong>
+              <img id="gameMethodImage" class="method-image" src="" alt="Correct method card">
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Answer key</h2>
+            <ul id="answerList" class="answer-list"></ul>
+          </div>
+        </div>
+
+        <div class="grid score-layout" style="margin-top:14px;">
+          <div class="card">
+            <h2>Game setup</h2>
+            <div class="field"><label for="playerCount">Number of players</label><select id="playerCount"><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
+            <div id="playerNames" class="player-list"></div>
+            <div class="round-controls">
+              <button id="addRoundBtn" class="good">Add round</button>
+              <button id="resetScoresBtn" class="pink">Reset scores</button>
+            </div>
+            <button id="exportBtn" class="purple" style="width:100%; margin-top:10px;">Export CSV</button>
+            <p class="tiny">Method correct = 50 points. Reagents correct = 75 points. A perfect streak adds 25 extra points per consecutive perfect round.</p>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <h2>Scores</h2>
+              <div id="leaderboard" class="leaderboard"></div>
+            </div>
+            <div id="scoreTableWrap" class="table-wrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="quizPanel" class="panel">
+        <div id="quizGame" class="quiz-layout">
+          <div class="card">
+            <div class="quiz-tracker"><span id="quizQuestionNo">Question 1 / 10</span><span id="quizScore">0 / 10 correct</span></div>
+            <div class="quiz-salt"><div class="tiny">Prepare this salt</div><div id="quizFormula" class="quiz-formula">-</div><div id="quizSaltName" class="quiz-name">-</div></div>
+            <button id="quizHintBtn" class="purple" style="width:100%;">Need a hint?</button>
+            <div id="quizHint" class="quiz-feedback info"></div>
+          </div>
+
+          <div class="card">
+            <h2 id="quizPrompt">Choose the preparation method</h2>
+            <div id="quizMethodCards" class="method-cards">
+              <button class="method-card" data-method="precipitation" aria-label="Choose precipitation"><img src="images/method-precipitation.jpg" alt="Precipitation method card"></button>
+              <button class="method-card" data-method="titration" aria-label="Choose titration"><img src="images/method-titration.jpg" alt="Titration method card"></button>
+              <button class="method-card" data-method="excess" aria-label="Choose excess solid with acid"><img src="images/method-excess-solid.jpg" alt="Excess solid with acid method card"></button>
+            </div>
+            <div id="quizReagentSection" style="display:none;">
+              <h3>Choose two reagents</h3>
+              <div class="reagent-selects">
+                <div><label for="quizR1">Reagent 1</label><select id="quizR1"></select></div>
+                <div><label for="quizR2">Reagent 2</label><select id="quizR2"></select></div>
+                <button id="quizSubmitReagents" class="primary">Confirm</button>
+              </div>
+            </div>
+            <div id="quizFeedback" class="quiz-feedback"></div>
+            <div id="quizAnswerPanel" class="quiz-answer-panel" style="display:none;"></div>
+            <button id="quizNextBtn" class="good" style="display:none; margin-top:12px;">Continue</button>
+          </div>
+        </div>
+
+        <div id="quizSummary" class="card" style="display:none; text-align:center;">
+          <h2>Challenge complete</h2>
+          <p id="quizFinalScore" style="font-size:2rem; font-weight:900; margin:8px 0 12px;"></p>
+          <div id="quizDiagnostic" class="explain-card" style="text-align:left; margin-bottom:14px;"></div>
+          <button id="quizTryAgainBtn" class="primary">Try again</button>
+        </div>
+      </section>
+
+      <section id="learnPanel" class="panel">
+        <div class="learn-layout">
+          <div class="card">
+            <h2>Learn the route</h2>
+            <p class="tiny">Answer one question at a time. The flowchart highlights how to choose the salt preparation method.</p>
+            <div class="mini-selectors" style="margin-top:12px;">
+              <div><label for="learnCationSelect">Cation</label><select id="learnCationSelect"></select></div>
+              <div><label for="learnAnionSelect">Anion</label><select id="learnAnionSelect"></select></div>
+            </div>
+            <div class="learn-salt"><div class="tiny">Salt formed</div><div id="learnFormula" class="learn-formula">-</div><div class="badge-row"><span id="learnSolubilityBadge" class="badge">Solubility?</span><span id="learnGroupBadge" class="badge">Group?</span></div></div>
+            <h3 id="learnQuestion" style="display:none;"></h3>
+            <p id="learnPrompt" style="display:none; font-weight:900;"></p>
+            <div class="quiz-actions"><button id="showRouteBtn" class="primary">Show route</button><button id="resetLearnBtn">Reset</button><button id="learnHintBtn">Hint</button></div>
+            <div id="learnHintBox" class="hint-panel">
+              <ol>
+                <li><strong>Solubility of the salt and starting materials</strong>
+                  <ul>
+                    <li>All Group 1 and ammonium salts are soluble.</li>
+                    <li>All nitrates are soluble.</li>
+                    <li>All chlorides are soluble except silver and lead(II) chlorides.</li>
+                    <li>All sulfates are soluble except calcium, lead(II) and barium sulfates.</li>
+                    <li>All carbonates are insoluble except Group 1 and ammonium carbonates.</li>
+                  </ul>
+                </li>
+                <li><strong>Reactivity of the metal</strong>
+                  <ul>
+                    <li>Group 1 metals and some Group 2 metals react explosively/violently with acids, making the reaction unsafe.</li>
+                    <li>Cu, Ag and Au are unreactive metals, they do not react with acids.</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Method flowchart</h2>
+            <div id="learnMessage" class="flow-message info" style="display:none;"></div>
+            <div class="flowchart" aria-label="Salt preparation method flowchart">
+              <div class="flow-row"><div class="flow-node decision" data-flow="q1"><span class="node-tag">Decision 1</span><strong>Is the salt soluble in water?</strong><p>Use the solubility table.</p><div class="flow-options" id="learnQ1Options"><button class="good" data-learn-step="1" data-learn-answer="yes">Yes</button><button class="pink" data-learn-step="1" data-learn-answer="no">No</button></div></div></div>
+              <div class="flow-branches">
+                <div class="flow-branch">
+                  <div class="branch-label">If YES ↓</div>
+                  <div class="flow-node decision" data-flow="q2"><span class="node-tag">Decision 2</span><strong>Is it a Group 1 or ammonium salt?</strong><p>Sodium, potassium and ammonium salts use the titration route.</p><div class="flow-options hidden" id="learnQ2Options"><button class="good" data-learn-step="2" data-learn-answer="yes">Yes</button><button class="pink" data-learn-step="2" data-learn-answer="no">No</button></div></div>
+                  <div class="branch-labels"><div>YES ↓</div><div>NO ↓</div></div>
+                  <div class="flow-row two">
+                    <div class="flow-node final titration" data-flow="titration"><img class="flow-node-img" src="images/method-titration.jpg" alt="Titration method card"><span class="node-tag">Method</span><strong>Titration</strong><p>React acid with alkali or soluble carbonate, then crystallise.</p></div>
+                    <div class="flow-node final excess" data-flow="excess"><img class="flow-node-img" src="images/method-excess-solid.jpg" alt="Excess solid with acid method card"><span class="node-tag">Method</span><strong>Reaction of excess solid with acid</strong><p>Use excess metal, insoluble base or insoluble carbonate. Filter, then crystallise.</p></div>
+                  </div>
+                </div>
+                <div class="flow-branch">
+                  <div class="branch-label">If NO ↓</div>
+                  <div class="flow-node final precipitation" data-flow="precipitation"><img class="flow-node-img" src="images/method-precipitation.jpg" alt="Precipitation method card"><span class="node-tag">Method</span><strong>Precipitation</strong><p>Mix two soluble solutions containing the required ions.</p></div>
+                </div>
+              </div>
+            </div>
+            <div id="learnMethodDetail" class="flow-detail" style="margin-top:14px;"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+
+<script>
+const APP_DATA = {"records": [{"Salt": "MgSO₄", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Mg, MgO, Mg(OH)₂ or MgCO₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "Mg(s) + H₂SO₄(aq) → MgSO₄(aq) + H₂(g)", "Ionic Equation": "Mg(s) + 2 H⁺(aq) → Mg²⁺(aq) + H₂(g)"}, {"Salt": "MgCl₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Mg, MgO, Mg(OH)₂ or MgCO₃", "Reagent 2": "HCl", "Chemical Equation": "MgCO₃(s) + 2 HCl(aq) → MgCl₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "MgCO₃(s) + 2 H⁺(aq) → Mg²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "CaCl₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (too reactive)", "Base": "No (sparingly soluble)", "Carbonate": "Yes", "Reagent 1": "Excess CaCO₃", "Reagent 2": "HCl", "Chemical Equation": "CaCO₃(s) + 2 HCl(aq) → CaCl₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "CaCO₃(s) + 2 H⁺(aq) → Ca²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "ZnCl₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Zn, ZnO, Zn(OH)₂ or ZnCO₃", "Reagent 2": "HCl", "Chemical Equation": "Zn(s) + 2 HCl(aq) → ZnCl₂(aq) + H₂(g)", "Ionic Equation": "Zn(s) + 2 H⁺(aq) → Zn²⁺(aq) + H₂(g)"}, {"Salt": "Mg(NO₃)₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Mg, MgO, Mg(OH)₂ or MgCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "MgCO₃(s) + 2 HNO₃(aq) → Mg(NO₃)₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "MgCO₃(s) + 2 H⁺(aq) → Mg²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "Fe(NO₃)₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Fe, FeO, Fe(OH)₂ or FeCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "FeO(s) + 2 HNO₃(aq) → Fe(NO₃)₂(aq) + H₂O(l)", "Ionic Equation": "FeO(s) + 2 H⁺(aq) → Fe²⁺(aq) + H₂O(l)"}, {"Salt": "Fe(NO₃)₃", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Fe, Fe₂O₃ or Fe₂(CO₃)₃", "Reagent 2": "HNO₃", "Chemical Equation": "2 Fe(s) + 6 HNO₃(aq) → 2 Fe(NO₃)₃(aq) + 3 H₂(g)", "Ionic Equation": "2 Fe(s) + 6 H⁺(aq) → 2 Fe³⁺(aq) + 3 H₂(g)"}, {"Salt": "Pb(NO₃)₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Pb, PbO, Pb(OH)₂ or PbCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "PbCO₃(s) + 2 HNO₃(aq) → Pb(NO₃)₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "PbCO₃(s) + 2 H⁺(aq) → Pb²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "Zn(NO₃)₂", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Zn, ZnO, Zn(OH)₂ or ZnCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "Zn(s) + 2 HNO₃(aq) → Zn(NO₃)₃(aq) + H₂(g)", "Ionic Equation": "Zn(s) + 2 H⁺(aq) → Zn²⁺(aq) + H₂(g)"}, {"Salt": "FeSO₄", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Fe, FeO, Fe(OH)₂ or FeCO₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "Fe(s) + H₂SO₄(aq) → FeSO₄(aq) + H₂(g)", "Ionic Equation": "Fe(s) + 2 H⁺(aq) → Fe²⁺(aq) + H₂(g)"}, {"Salt": "ZnSO₄", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Zn, ZnO, Zn(OH)₂ or ZnCO₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "Zn(s) + H₂SO₄(aq) → ZnSO₄(aq) + H₂(g)", "Ionic Equation": "Zn(s) + 2 H⁺(aq) → Zn²⁺(aq) + H₂(g)"}, {"Salt": "PbCl₂", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Pb(NO₃)₂ or any soluble lead(II) compound", "Reagent 2": "NaCl or any other soluble chloride", "Chemical Equation": "Pb(NO₃)₂(aq) + 2 NaCl(aq) → PbCl₂(s) + 2 NaNO₃(aq)", "Ionic Equation": "Pb²⁺(aq) + 2 Cl⁻(aq) → PbCl₂(s)"}, {"Salt": "AgCl", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "AgNO₃ or any other soluble silver compound", "Reagent 2": "NaCl or any other soluble chloride", "Chemical Equation": "AgNO₃(aq) + NaCl(aq) → AgCl(s) + NaNO₃(aq)", "Ionic Equation": "Ag⁺(aq) + Cl⁻(aq) → AgCl(s)"}, {"Salt": "MgCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Mg(NO₃)₂ or any other soluble magnesium compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Mg(NO₃)₂(aq) + Na₂CO₃(aq) → MgCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Mg²⁺(aq) + CO₃²⁻(aq) → MgCO₃(s)"}, {"Salt": "CaCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Ca(NO₃)₂ or any other soluble calcium compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Ca(NO₃)₂(aq) + Na₂CO₃(aq) → CaCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Ca²⁺(aq) + CO₃²⁻(aq) → CaCO₃(s)"}, {"Salt": "BaCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Ba(NO₃)₂ or any other soluble barium compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Ba(NO₃)₂(aq) + Na₂CO₃(aq) → BaCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Ba²⁺(aq) + CO₃²⁻(aq) → BaCO₃(s)"}, {"Salt": "CuCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Cu(NO₃)₂ or any other soluble copper(II) compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Cu(NO₃)₂(aq) + Na₂CO₃(aq) → CuCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Cu²⁺(aq) + CO₃²⁻(aq) → CuCO₃(s)"}, {"Salt": "FeCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Fe(NO₃)₂ or any other soluble iron(II) compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Fe(NO₃)₂(aq) + Na₂CO₃(aq) → FeCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Fe²⁺(aq) + CO₃²⁻(aq) → FeCO₃(s)"}, {"Salt": "PbCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Pb(NO₃)₂ or any other soluble lead(II) compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Pb(NO₃)₂(aq) + Na₂CO₃(aq) → PbCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Pb²⁺(aq) + CO₃²⁻(aq) → PbCO₃(s)"}, {"Salt": "ZnCO₃", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Zn(NO₃)₂ or any other soluble zinc compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "Zn(NO₃)₂(aq) + Na₂CO₃(aq) → ZnCO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "Zn²⁺(aq) + CO₃²⁻(aq) → ZnCO₃(s)"}, {"Salt": "BaSO₄", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Ba(NO₃)₂ or any other soluble barium compound", "Reagent 2": "Na₂SO₄ or any other soluble sulfate", "Chemical Equation": "Ba(NO₃)₂(aq) + Na₂SO₄(aq) → BaSO₄(s) + 2 NaNO₃(aq)", "Ionic Equation": "Ba²⁺(aq) + SO₄²⁻(aq) → BaSO₄(s)"}, {"Salt": "PbSO₄", "Difficulty": 1, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Pb(NO₃)₂", "Reagent 2": "Na₂SO₄ or any other soluble sulfate", "Chemical Equation": "Pb(NO₃)₂(aq) + Na₂SO₄(aq) → PbSO₄(s) + 2 NaNO₃(aq)", "Ionic Equation": "Pb²⁺(aq) + SO₄²⁻(aq) → PbSO₄(s)"}, {"Salt": "NaCl", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NaOH", "Reagent 2": "HCl", "Chemical Equation": "NaOH(aq) + HCl(aq) → NaCl(aq) + H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "NaNO₃", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NaOH", "Reagent 2": "HNO₃", "Chemical Equation": "HNO₃ (aq) + NaOH(aq) → NaNO₃(aq) + H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "Na₂SO₄", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NaOH", "Reagent 2": "H₂SO₄", "Chemical Equation": "H₂SO₄(aq) + 2 NaOH(aq) → Na₂SO₄(aq) + 2 H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "KCl", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "KOH", "Reagent 2": "HCl", "Chemical Equation": "KOH(aq) + HCl(aq) → KCl(aq) + H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "KNO₃", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "KOH", "Reagent 2": "HNO₃", "Chemical Equation": "HNO₃ (aq) + KOH(aq) → KNO₃(aq) + H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "K₂SO₄", "Difficulty": 1, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "KOH", "Reagent 2": "H₂SO₄", "Chemical Equation": "H₂SO₄(aq) + 2 KOH(aq) → K₂SO₄(aq) + 2 H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "BaCl₂", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (too reactive)", "Base": "No (sparingly soluble)", "Carbonate": "Yes", "Reagent 1": "Excess BaCO₃", "Reagent 2": "HCl", "Chemical Equation": "BaCO₃(s) + 2 HCl(aq) → BaCl₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "BaCO₃(s) + 2 H⁺(aq) → Ba²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "AlCl₃", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Al, Al₂O₃, Al(OH)₃ or Al₂(CO₃)₃", "Reagent 2": "HCl", "Chemical Equation": "2 Al(s) + 6 HCl(aq) → 2 AlCl₃(aq) + 3 H₂(g)", "Ionic Equation": "2 Al(s) + 6 H⁺(aq) → 2 Al³⁺(aq) + 3 H₂(g)"}, {"Salt": "CuCl₂", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (unreactive)", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess CuO, Cu(OH)₂ or CuCO₃", "Reagent 2": "HCl", "Chemical Equation": "CuO(s) + 2 HCl(aq) → CuCl₂(aq) + H₂O(l)", "Ionic Equation": "CuO(s) + 2 H⁺(aq) → Cu²⁺(aq) + H₂O(l)"}, {"Salt": "FeCl₂", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Fe, FeO, Fe(OH)₂ or FeCO₃", "Reagent 2": "HCl", "Chemical Equation": "FeO(s) + 2 HCl(aq) → FeCl₂(aq) + H₂O(l)", "Ionic Equation": "FeO(s) + 2 H⁺(aq) → Fe²⁺(aq) + H₂O(l)"}, {"Salt": "FeCl₃", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Fe, Fe₂O₃, Fe(OH)₃ or Fe₂(CO₃)₃", "Reagent 2": "HCl", "Chemical Equation": "Fe₂O₃(s) + 6 HCl(aq) → 2 FeCl₃(aq) + 3 H₂O(l)", "Ionic Equation": "Fe₂O₃(s) + 6 H⁺(aq) → 2 Fe³⁺(aq) + 3 H₂O(l)"}, {"Salt": "Ca(NO₃)₂", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (too reactive)", "Base": "No (sparingly soluble)", "Carbonate": "Yes", "Reagent 1": "Excess CaCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "CaCO₃(s) + 2 HNO₃(aq) → Ca(NO₃)₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "CaCO₃(s) + 2 H⁺(aq) → Ca²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "Ba(NO₃)₂", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (too reactive)", "Base": "No (sparingly soluble)", "Carbonate": "Yes", "Reagent 1": "Excess BaCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "BaCO₃(s) + 2 HNO₃(aq) → Ba(NO₃)₂(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "BaCO₃(s) + 2 H⁺(aq) → Ba²⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "Al(NO₃)₃", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Al, Al₂O₃, Al(OH)₃ or Al₂(CO₃)₃", "Reagent 2": "HNO₃", "Chemical Equation": "2 Al(s) + 6 HNO₃(aq) → 2 Al(NO₃)₃(aq) + 3 H₂(g)", "Ionic Equation": "2 Al(s) + 6 H⁺(aq) → 2 Al³⁺(aq) + 3 H₂(g)"}, {"Salt": "Cu(NO₃)₂", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (unreactive)", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess CuO, Cu(OH)₂ or CuCO₃", "Reagent 2": "HNO₃", "Chemical Equation": "CuO(s) + 2 HNO₃(aq) → Cu(NO₃)₂(aq) + H₂O(l)", "Ionic Equation": "CuO(s) + 2 H⁺(aq) → Cu²⁺(aq) + H₂O(l)"}, {"Salt": "AgNO₃", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (unreactive)", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Ag₂O, AgOH or Ag₂CO₃", "Reagent 2": "HNO₃", "Chemical Equation": "Ag₂CO₃(s) + 2 HNO₃(aq) → 2 AgNO₃(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "Ag₂CO₃(s) + 2 H⁺(aq) → 2 Ag⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "CuSO₄", "Difficulty": 2, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (unreactive)", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess CuO, Cu(OH)₂ or CuCO₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "CuO(s) + H₂SO₄(aq) → CuSO₄(aq) + H₂O(l)", "Ionic Equation": "CuO(s) + 2 H⁺(aq) → Cu²⁺(aq) + H₂O(l)"}, {"Salt": "Al₂(SO₄)₃", "Difficulty": 3, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Al, Al₂O₃, Al(OH)₃ or Al₂(CO₃)₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "2 Al(s) + 3 H₂SO₄(aq) → Al₂(SO₄)₃(aq) + 3 H₂(g)", "Ionic Equation": "2 Al(s) + 6 H⁺(aq) → 2 Al³⁺(aq) + 3 H₂(g)"}, {"Salt": "Fe₂(SO₄)₃", "Difficulty": 3, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "Yes", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Fe, Fe₂O₃, Fe(OH)₃ or Fe₂(CO₃)₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "Fe₂(CO₃)₃(s) + 3 H₂SO₄(aq) → Fe₂(SO₄)₃(aq) + 3 CO₂(g) + 3 H₂O(l)", "Ionic Equation": "Fe₂(CO₃)₃(s) + 6 H⁺(aq) → 2 Fe³⁺(aq) + 3 CO₂(g) + 3 H₂O(l)"}, {"Salt": "Ag₂SO₄", "Difficulty": 3, "Is it soluble?": "Yes", "Method of preparation": "Excess solid to acid", "Suitable metal": "No (unreactive)", "Base": "Yes", "Carbonate": "Yes", "Reagent 1": "Excess Ag₂O, AgOH or Ag₂CO₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "Ag₂CO₃(s) + H₂SO₄(aq) → Ag₂SO₄(aq) + CO₂(g) + H₂O(l)", "Ionic Equation": "Ag₂CO₃(s) + 2 H⁺(aq) → 2 Ag⁺(aq) + CO₂(g) + H₂O(l)"}, {"Salt": "Al₂(CO₃)₃", "Difficulty": 3, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Al(NO₃)₃ or any other soluble aluminium compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "2 Al(NO₃)₃(aq) + 3 Na₂CO₃(aq) → Al₂(CO₃)₃(s) + 6 NaNO₃(aq)", "Ionic Equation": "2 Al³⁺(aq) + 3 CO₃²⁻(aq) → Al₂(CO₃)₃(s)"}, {"Salt": "Fe₂(CO₃)₃", "Difficulty": 3, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Fe(NO₃)₃ or any other soluble iron(III) compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "2 Fe(NO₃)₃(aq) + 3 Na₂CO₃(aq) → Fe₂(CO₃)₃(s) + 6 NaNO₃(aq)", "Ionic Equation": "2 Fe³⁺(aq) + 3 CO₃²⁻(aq) → Fe₂(CO₃)₃(s)"}, {"Salt": "Ag₂CO₃", "Difficulty": 3, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "AgNO₃ or any other soluble silver compound", "Reagent 2": "Na₂CO₃ or any other soluble carbonate", "Chemical Equation": "2 AgNO₃(aq) + Na₂CO₃(aq) → Ag₂CO₃(s) + 2 NaNO₃(aq)", "Ionic Equation": "2 Ag⁺(aq) + CO₃²⁻(aq) → Ag₂CO₃(s)"}, {"Salt": "CaSO₄", "Difficulty": 3, "Is it soluble?": "No", "Method of preparation": "Precipitation", "Suitable metal": "N/A", "Base": "N/A", "Carbonate": "N/A", "Reagent 1": "Ca(NO₃)₂ or any other soluble calcium compound", "Reagent 2": "Na₂SO₄ or any other soluble sulfate", "Chemical Equation": "Ca(NO₃)₂(aq) + Na₂SO₄(aq) → CaSO₄(s) + 2 NaNO₃(aq)", "Ionic Equation": "Ca²⁺(aq) + SO₄²⁻(aq) → CaSO₄(s)"}, {"Salt": "NH₄Cl", "Difficulty": 3, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NH₃", "Reagent 2": "HCl", "Chemical Equation": "NH₃(aq) + HCl(aq) → NH₄Cl(aq)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "NH₄NO₃", "Difficulty": 3, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NH₃", "Reagent 2": "HNO₃", "Chemical Equation": "HNO₃ (aq) + NH₃(aq) → NH₄NO₃(aq)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "(NH₄)₂SO₄", "Difficulty": 3, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NH₃", "Reagent 2": "H₂SO₄", "Chemical Equation": "2 NH₃(aq) + H₂SO₄(aq) → (NH₄)₂SO₄(aq)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "Na₂CO₃", "Difficulty": 4, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NaOH", "Reagent 2": "H₂CO₃", "Chemical Equation": "H₂CO₃(aq) + 2 NaOH(aq) → Na₂CO₃(aq) + 2 H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "K₂CO₃", "Difficulty": 4, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No (too reactive)", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "KOH", "Reagent 2": "H₂CO₃", "Chemical Equation": "H₂CO₃(aq) + 2 KOH(aq) → K₂CO₃(aq) + 2 H₂O(l)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}, {"Salt": "(NH₄)₂CO₃", "Difficulty": 4, "Is it soluble?": "Yes", "Method of preparation": "Titration", "Suitable metal": "No", "Base": "No (always soluble)", "Carbonate": "No (always soluble)", "Reagent 1": "NH₃", "Reagent 2": "H₂CO₃", "Chemical Equation": "2 NH₃(aq) + H₂CO₃(aq) → (NH₄)₂CO₃(aq)", "Ionic Equation": "H⁺(aq) + OH⁻(aq) → H₂O(l)"}], "cations": ["sodium", "potassium", "calcium", "barium", "aluminium", "magnesium", "copper(II)", "iron(II)", "iron(III)", "lead(II)", "zinc", "silver", "ammonium"], "anions": ["chloride", "nitrate", "carbonate", "sulfate"], "formulaMap": {"sodium||chloride": "NaCl", "sodium||nitrate": "NaNO₃", "sodium||carbonate": "Na₂CO₃", "sodium||sulfate": "Na₂SO₄", "potassium||chloride": "KCl", "potassium||nitrate": "KNO₃", "potassium||carbonate": "K₂CO₃", "potassium||sulfate": "K₂SO₄", "calcium||chloride": "CaCl₂", "calcium||nitrate": "Ca(NO₃)₂", "calcium||carbonate": "CaCO₃", "calcium||sulfate": "CaSO₄", "barium||chloride": "BaCl₂", "barium||nitrate": "Ba(NO₃)₂", "barium||carbonate": "BaCO₃", "barium||sulfate": "BaSO₄", "aluminium||chloride": "AlCl₃", "aluminium||nitrate": "Al(NO₃)₃", "aluminium||carbonate": "Al₂(CO₃)₃", "aluminium||sulfate": "Al₂(SO₄)₃", "magnesium||chloride": "MgCl₂", "magnesium||nitrate": "Mg(NO₃)₂", "magnesium||carbonate": "MgCO₃", "magnesium||sulfate": "MgSO₄", "copper(II)||chloride": "CuCl₂", "copper(II)||nitrate": "Cu(NO₃)₂", "copper(II)||carbonate": "CuCO₃", "copper(II)||sulfate": "CuSO₄", "iron(II)||chloride": "FeCl₂", "iron(II)||nitrate": "Fe(NO₃)₂", "iron(II)||carbonate": "FeCO₃", "iron(II)||sulfate": "FeSO₄", "iron(III)||chloride": "FeCl₃", "iron(III)||nitrate": "Fe(NO₃)₃", "iron(III)||carbonate": "Fe₂(CO₃)₃", "iron(III)||sulfate": "Fe₂(SO₄)₃", "lead(II)||chloride": "PbCl₂", "lead(II)||nitrate": "Pb(NO₃)₂", "lead(II)||carbonate": "PbCO₃", "lead(II)||sulfate": "PbSO₄", "zinc||chloride": "ZnCl₂", "zinc||nitrate": "Zn(NO₃)₂", "zinc||carbonate": "ZnCO₃", "zinc||sulfate": "ZnSO₄", "silver||chloride": "AgCl", "silver||nitrate": "AgNO₃", "silver||carbonate": "Ag₂CO₃", "silver||sulfate": "Ag₂SO₄", "ammonium||chloride": "NH₄Cl", "ammonium||nitrate": "NH₄NO₃", "ammonium||carbonate": "(NH₄)₂CO₃", "ammonium||sulfate": "(NH₄)₂SO₄"}};
+const recordsBySalt = new Map(APP_DATA.records.map(r => [r.Salt, r]));
+const STORAGE_KEY = 'chemDetectivesSaltPrep.v4';
+const METHOD_LABEL = { precipitation:'Precipitation', titration:'Titration', excess:'Excess solid with acid' };
+const METHOD_IMG = { precipitation:'./images/method-precipitation.jpg', titration:'./images/method-titration.jpg', excess:'./images/method-excess-solid.jpg', unknown:'' };
+let state = { playerCount: 4, players: ['Player 1','Player 2','Player 3','Player 4','Player 5'], rounds: [] };
+let quizState = { questions:[], index:0, correct:0, active:null, methodDone:false, errors:{precipitation:0,titration:0,excess:0} };
+let learnStep = 1;
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+function safeText(value) { return value === null || value === undefined || value === '' ? 'N/A' : value; }
+function showToast(msg) { const toast=$('#toast'); toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1600); }
+function playTone(freq=520,duration=.07,type='square',gain=.035) { try { const ctx=playTone.ctx||(playTone.ctx=new (window.AudioContext||window.webkitAudioContext)()); const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.type=type; osc.frequency.setValueAtTime(freq,ctx.currentTime); g.gain.setValueAtTime(0,ctx.currentTime); g.gain.linearRampToValueAtTime(gain,ctx.currentTime+.01); g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration); osc.connect(g); g.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+duration); } catch(e) {} }
+function clickSound() { playTone(520,.06); }
+function goodSound() { playTone(660,.08,'triangle',.04); setTimeout(()=>playTone(880,.08,'triangle',.035),70); }
+function keyFor(cation, anion) { return `${cation}||${anion}`; }
+function recordFor(cation, anion) { const formula=APP_DATA.formulaMap[keyFor(cation,anion)]; return recordsBySalt.get(formula) || { Salt: formula || '-', 'Is it soluble?':'-', 'Method of preparation':'Not in database' }; }
+function currentRecord() { return recordFor($('#cationSelect').value, $('#anionSelect').value); }
+function currentLearnRecord() { return recordFor($('#learnCationSelect').value, $('#learnAnionSelect').value); }
+function fillSelect(select, values) { select.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join(''); }
+function saltNameFromFormula(formula) { const found=Object.entries(APP_DATA.formulaMap).find(([,f])=>f===formula); if(!found) return formula; const [cation,anion]=found[0].split('||'); return `${cation} ${anion}`; }
+function isGroup1OrAmmonium(cation) { return ['sodium','potassium','ammonium'].includes(cation); }
+function methodKey(record) { return record['Method of preparation'] === 'Precipitation' ? 'precipitation' : record['Method of preparation'] === 'Titration' ? 'titration' : record['Method of preparation'] === 'Excess solid to acid' ? 'excess' : 'unknown'; }
+function methodClass(record) { const key=methodKey(record); return key==='precipitation'?'bad':key==='titration'?'mid':'good'; }
+function shuffleArray(arr) { return [...arr].sort(()=>Math.random()-.5); }
+
+function initTabs() { $$('.tab').forEach(btn=>btn.addEventListener('click',()=>{ $$('.tab').forEach(b=>b.classList.remove('active')); $$('.panel').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); $('#' + btn.dataset.tab).classList.add('active'); clickSound(); updateTopScore(); })); }
+function updateTopScore() { const scores=calculateScores(); const top=scores.length?Math.max(...scores.map(s=>s.score),0):0; $('#topScore').textContent=top; $('#topScoreLabel').textContent='Top score'; }
+
+function initChecker() { fillSelect($('#cationSelect'), APP_DATA.cations); fillSelect($('#anionSelect'), APP_DATA.anions); $('#cationSelect').value='silver'; $('#anionSelect').value='chloride'; $('#cationSelect').addEventListener('change', updateAnswer); $('#anionSelect').addEventListener('change', updateAnswer); updateAnswer(); }
+function updateAnswer() { const r=currentRecord(); const key=methodKey(r); $('#formulaDisplay').textContent=r.Salt||'-'; $('#methodBadge').textContent=safeText(r['Method of preparation']); $('#methodBadge').className=`badge ${methodClass(r)}`; $('#solubilityBadge').textContent=`Soluble: ${safeText(r['Is it soluble?'])}`; $('#solubilityBadge').className=`badge ${r['Is it soluble?']==='Yes'?'good':'bad'}`; $('#gameMethodImage').src=METHOD_IMG[key]||''; $('#gameMethodImage').alt=`Correct method card: ${METHOD_LABEL[key]||safeText(r['Method of preparation'])}`; $('#answerList').innerHTML=`
+    <li><strong>Method of preparation</strong><span>${safeText(r['Method of preparation'])}</span></li>
+    <li><strong>Soluble in water?</strong><span>${safeText(r['Is it soluble?'])}</span></li>
+    <li><strong>Suitable metal?</strong><span>${safeText(r['Suitable metal'])}</span></li>
+    <li><strong>Insoluble base?</strong><span>${safeText(r.Base)}</span></li>
+    <li><strong>Insoluble carbonate?</strong><span>${safeText(r.Carbonate)}</span></li>
+    <li><strong>Reagent 1</strong><span>${safeText(r['Reagent 1'])}</span></li>
+    <li><strong>Reagent 2</strong><span>${safeText(r['Reagent 2'])}</span></li>
+    <li><strong>Chemical equation</strong><span>${safeText(r['Chemical Equation'])}</span></li>
+    <li><strong>Ionic equation</strong><span>${safeText(r['Ionic Equation'])}</span></li>`; }
+
+function loadState() { try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); if(saved && saved.players && saved.rounds) state=saved; } catch(e) {} }
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function initScores() { loadState(); $('#playerCount').value=String(state.playerCount); $('#playerCount').addEventListener('change',()=>{ state.playerCount=Number($('#playerCount').value); renderScores(); saveState(); }); $('#addRoundBtn').addEventListener('click',()=>{ addRound(); goodSound(); }); $('#resetScoresBtn').addEventListener('click',resetScores); $('#exportBtn').addEventListener('click',exportCSV); renderScores(); }
+function addRound() { const round={}; for(let i=0;i<state.playerCount;i++) round[i]={method:false,reagents:false}; state.rounds.push(round); renderScores(); saveState(); }
+function resetScores() { if(!confirm('Reset all scores and rounds?')) return; state.rounds=[]; renderScores(); saveState(); showToast('Scores reset'); }
+function calculateScores() { const scores=[]; for(let p=0;p<state.playerCount;p++){ let score=0, streak=0; for(const round of state.rounds){ const cell=round[p]||{method:false,reagents:false}; if(cell.method) score+=50; if(cell.reagents) score+=75; if(cell.method&&cell.reagents){ streak+=1; if(streak>1) score+=25*(streak-1); } else streak=0; } scores.push({name:state.players[p]||`Player ${p+1}`,score}); } return scores; }
+function renderScores() { const list=$('#playerNames'); list.innerHTML=''; for(let i=0;i<state.playerCount;i++){ const row=document.createElement('div'); row.className='player-row'; row.innerHTML=`<input type="text" value="${state.players[i]||`Player ${i+1}`}" aria-label="Player ${i+1} name"><span class="badge">P${i+1}</span>`; row.querySelector('input').addEventListener('input',e=>{ state.players[i]=e.target.value; renderLeaderboard(); renderTable(); saveState(); }); list.appendChild(row); }
+  renderLeaderboard(); renderTable(); updateTopScore(); }
+function renderLeaderboard() { const scores=calculateScores(); const max=Math.max(...scores.map(s=>s.score),0); $('#leaderboard').innerHTML=scores.map(s=>`<div class="bar-card"><div class="bar-head"><span>${s.name}</span><span>${s.score}</span></div><div class="bar-track"><div class="bar-fill" style="width:${max>0?(s.score/max*100).toFixed(1):0}%"></div></div></div>`).join('') || '<div class="tiny">No players yet.</div>'; }
+function renderTable() { const wrap=$('#scoreTableWrap'); if(state.rounds.length===0){ wrap.innerHTML='<div class="tiny" style="padding:18px; text-align:center;">No rounds yet. Click Add round to start tracking.</div>'; return; } let html='<table><thead><tr><th>Round</th>'; for(let p=0;p<state.playerCount;p++) html+=`<th colspan="2">${state.players[p]||`Player ${p+1}`}</th>`; html+='</tr><tr><th></th>'; for(let p=0;p<state.playerCount;p++) html+='<th>Method</th><th>Reagents</th>'; html+='</tr></thead><tbody>'; state.rounds.forEach((round,ri)=>{ html+=`<tr><td>${ri+1}</td>`; for(let p=0;p<state.playerCount;p++){ const cell=round[p]||{method:false,reagents:false}; html+=`<td><input type="checkbox" data-r="${ri}" data-p="${p}" data-k="method" ${cell.method?'checked':''}></td><td><input type="checkbox" data-r="${ri}" data-p="${p}" data-k="reagents" ${cell.reagents?'checked':''}></td>`; } html+='</tr>'; }); html+='</tbody></table>'; wrap.innerHTML=html; wrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',e=>{ const r=Number(e.target.dataset.r),p=Number(e.target.dataset.p),k=e.target.dataset.k; state.rounds[r][p]=state.rounds[r][p]||{method:false,reagents:false}; state.rounds[r][p][k]=e.target.checked; renderLeaderboard(); updateTopScore(); saveState(); })); }
+function exportCSV() { const scores=calculateScores(); let csv='Player,Score\n'+scores.map(s=>`"${s.name}",${s.score}`).join('\n')+'\n\nRound'; for(let p=0;p<state.playerCount;p++) csv+=`,${state.players[p]} method,${state.players[p]} reagents`; csv+='\n'; state.rounds.forEach((round,i)=>{ csv+=`${i+1}`; for(let p=0;p<state.playerCount;p++){ const cell=round[p]||{}; csv+=`,${cell.method?'Yes':'No'},${cell.reagents?'Yes':'No'}`; } csv+='\n'; }); const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='chemistry-detectives-scores.csv'; a.click(); URL.revokeObjectURL(a.href); }
+
+function allReagentOptions() { const set=new Set(['-- select reagent --']); APP_DATA.records.forEach(r=>{ if(r['Reagent 1']) set.add(r['Reagent 1']); if(r['Reagent 2']) set.add(r['Reagent 2']); }); return [...set]; }
+function quizHintText(r) { const key=methodKey(r); if(key==='precipitation') return `${r.Salt} is insoluble in water, so prepare it by mixing two soluble solutions containing the required ions.`; if(key==='titration') return `${r.Salt} is soluble and contains a Group 1 or ammonium ion, so use titration.`; return `${r.Salt} is soluble, but it is not a Group 1 or ammonium salt. Use excess solid with acid, then crystallise.`; }
+function buildQuizQuestions() { const usable=APP_DATA.records.filter(r=>r.Salt&&r['Method of preparation']&&r['Reagent 1']&&r['Reagent 2']); const pick=(key,n)=>shuffleArray(usable.filter(r=>methodKey(r)===key)).slice(0,n); let q=[...pick('titration',3),...pick('excess',3),...pick('precipitation',4)]; if(q.length<10) q=[...q,...shuffleArray(usable.filter(r=>!q.includes(r))).slice(0,10-q.length)]; return shuffleArray(q).slice(0,10); }
+function initQuiz() { fillSelect($('#quizR1'), allReagentOptions()); fillSelect($('#quizR2'), allReagentOptions()); $$('#quizMethodCards .method-card').forEach(btn=>btn.addEventListener('click',()=>chooseQuizMethod(btn.dataset.method))); $('#quizHintBtn').addEventListener('click',showQuizHint); $('#quizSubmitReagents').addEventListener('click',submitQuizReagents); $('#quizNextBtn').addEventListener('click',nextQuizQuestion); $('#quizTryAgainBtn').addEventListener('click',startQuiz); startQuiz(); }
+function startQuiz() { quizState={questions:buildQuizQuestions(),index:0,correct:0,active:null,methodDone:false,errors:{precipitation:0,titration:0,excess:0}}; $('#quizGame').style.display='grid'; $('#quizSummary').style.display='none'; loadQuizQuestion(); }
+function loadQuizQuestion() { if(quizState.index>=quizState.questions.length) return showQuizSummary(); const r=quizState.questions[quizState.index]; quizState.active=r; quizState.methodDone=false; $('#quizQuestionNo').textContent=`Question ${quizState.index+1} / ${quizState.questions.length}`; $('#quizScore').textContent=`${quizState.correct} / ${quizState.questions.length} correct`; $('#quizFormula').textContent=r.Salt; $('#quizSaltName').textContent=saltNameFromFormula(r.Salt); $('#quizPrompt').textContent='Choose the preparation method'; $('#quizHint').style.display='none'; $('#quizHint').textContent=''; $('#quizFeedback').style.display='none'; $('#quizFeedback').className='quiz-feedback'; $('#quizFeedback').innerHTML=''; $('#quizAnswerPanel').style.display='none'; $('#quizAnswerPanel').innerHTML=''; $('#quizReagentSection').style.display='none'; $('#quizNextBtn').style.display='none'; $('#quizR1').selectedIndex=0; $('#quizR2').selectedIndex=0; $$('#quizMethodCards .method-card').forEach(btn=>{ btn.disabled=false; btn.className='method-card'; }); }
+function showQuizHint() { $('#quizHint').innerHTML=`<strong>Hint:</strong> ${quizHintText(quizState.active)}`; $('#quizHint').style.display='block'; clickSound(); }
+function setQuizFeedback(msg,type) { const f=$('#quizFeedback'); f.innerHTML=msg; f.className=`quiz-feedback ${type}`; f.style.display='block'; }
+function chooseQuizMethod(method) { if(quizState.methodDone) return; const correct=methodKey(quizState.active); const buttons=$$('#quizMethodCards .method-card'); if(method===correct) { quizState.methodDone=true; goodSound(); buttons.forEach(btn=>{ btn.disabled=true; btn.classList.toggle('selected',btn.dataset.method===correct); btn.classList.toggle('faded',btn.dataset.method!==correct); }); $('#quizScore').textContent=`${quizState.correct} / ${quizState.questions.length} correct`; $('#quizPrompt').textContent='Correct method. Choose the reagents.'; $('#quizReagentSection').style.display='block'; setQuizFeedback(`Correct. The method is <strong>${METHOD_LABEL[correct]}</strong>.`,'correct'); } else { quizState.methodDone=true; quizState.errors[correct]++; playTone(180,.22,'sawtooth',.035); buttons.forEach(btn=>{ btn.disabled=true; btn.classList.toggle('selected',btn.dataset.method===correct); btn.classList.toggle('faded',btn.dataset.method!==correct); if(btn.dataset.method===method) btn.classList.add('wrong-pick'); }); setQuizFeedback(`Not quite. The correct method is <strong>${METHOD_LABEL[correct]}</strong>.<br>${quizHintText(quizState.active)}`,'wrong'); showQuizAnswerPanel(); $('#quizNextBtn').style.display='inline-block'; } }
+function submitQuizReagents() { if(!quizState.methodDone) return; const r=quizState.active; const a=$('#quizR1').value,b=$('#quizR2').value; const correct=(a===r['Reagent 1']&&b===r['Reagent 2'])||(a===r['Reagent 2']&&b===r['Reagent 1']); if(correct) { quizState.correct+=1; goodSound(); setQuizFeedback(`Correct. Those reagents can prepare ${r.Salt}.`,'correct'); } else { playTone(180,.22,'sawtooth',.035); setQuizFeedback(`Wrong reagents.<br>Use <strong>${safeText(r['Reagent 1'])}</strong> and <strong>${safeText(r['Reagent 2'])}</strong>.`,'wrong'); } $('#quizScore').textContent=`${quizState.correct} / ${quizState.questions.length} correct`; $('#quizReagentSection').style.display='none'; showQuizAnswerPanel(); $('#quizNextBtn').style.display='inline-block'; }
+function showQuizAnswerPanel() { const r=quizState.active; $('#quizAnswerPanel').innerHTML=`<div class="explain-card"><strong>Reason</strong>${quizHintText(r)}</div><div class="explain-card"><strong>Accepted reagents</strong>${safeText(r['Reagent 1'])}<br>${safeText(r['Reagent 2'])}</div><div class="explain-card"><strong>Chemical equation</strong>${safeText(r['Chemical Equation'])}</div><div class="explain-card"><strong>Ionic equation</strong>${safeText(r['Ionic Equation'])}</div>`; $('#quizAnswerPanel').style.display='grid'; }
+function nextQuizQuestion() { quizState.index+=1; clickSound(); loadQuizQuestion(); }
+function showQuizSummary() { $('#quizGame').style.display='none'; $('#quizSummary').style.display='block'; const total=quizState.questions.length; $('#quizFinalScore').textContent=`${quizState.correct} / ${total} correct`;  const e=quizState.errors; let advice='Good spread. Keep practising reagent selection so you can explain your choices during the card game.'; const max=Math.max(e.precipitation,e.titration,e.excess); if(max>0) { if(e.precipitation===max) advice='Review insoluble salts. If the target salt is insoluble, use precipitation by mixing two soluble solutions.'; else if(e.titration===max) advice='Review soluble Group 1 and ammonium salts. They use titration because excess soluble reactants cannot be filtered off.'; else advice='Review soluble non-Group 1 and non-ammonium salts. Use excess solid with acid, filter, then crystallise.'; } $('#quizDiagnostic').innerHTML=`<strong>Advice</strong>${advice}`; }
+
+function initLearn() { fillSelect($('#learnCationSelect'), APP_DATA.cations); fillSelect($('#learnAnionSelect'), APP_DATA.anions); $('#learnCationSelect').value='silver'; $('#learnAnionSelect').value='chloride'; $('#learnCationSelect').addEventListener('change',resetLearn); $('#learnAnionSelect').addEventListener('change',resetLearn); $('#showRouteBtn').addEventListener('click',showLearnRoute); $('#resetLearnBtn').addEventListener('click',resetLearn); $('#learnHintBtn').addEventListener('click',toggleLearnHint); $$('[data-learn-answer]').forEach(btn=>btn.addEventListener('click',()=>answerLearn(btn.dataset.learnAnswer==='yes'))); resetLearn(); }
+function toggleLearnHint() { const box=$('#learnHintBox'); box.style.display = box.style.display==='block' ? 'none' : 'block'; clickSound(); }
+function setLearnOptionVisibility(q1Visible, q2Visible) { $('#learnQ1Options').classList.toggle('hidden', !q1Visible); $('#learnQ2Options').classList.toggle('hidden', !q2Visible); }
+function resetLearn() { learnStep=1; const r=currentLearnRecord(); $('#learnFormula').textContent=r.Salt||'-'; $('#learnSolubilityBadge').textContent='Solubility?'; $('#learnSolubilityBadge').className='badge'; $('#learnGroupBadge').textContent='Group?'; $('#learnGroupBadge').className='badge'; $('#learnQuestion').textContent=''; $('#learnPrompt').textContent=''; $('#learnMessage').className='flow-message info'; $('#learnMessage').textContent=''; $('#learnMessage').style.display='none'; setLearnOptionVisibility(true,false); clearFlowNodes(); $('[data-flow="q1"]').classList.add('active'); updateLearnDetail(null); }
+function clearFlowNodes() { $$('.flow-node').forEach(n=>{ n.classList.remove('active','correct','wrong','dim'); }); }
+function answerLearn(answer) { const r=currentLearnRecord(); const c=$('#learnCationSelect').value; const soluble=r['Is it soluble?']==='Yes'; if(learnStep===1) { if(answer===soluble) { $('[data-flow="q1"]').classList.add('correct'); $('#learnSolubilityBadge').textContent=`Soluble: ${soluble?'Yes':'No'}`; $('#learnSolubilityBadge').className=`badge ${soluble?'good':'bad'}`; setLearnOptionVisibility(false, soluble); if(!soluble) { goodSound(); finishLearn('precipitation', 'Correct. The salt is insoluble, so use precipitation.'); } else { goodSound(); learnStep=2; $('[data-flow="q2"]').classList.add('active'); $('#learnQuestion').textContent=''; $('#learnPrompt').textContent=''; $('#learnMessage').className='flow-message info'; $('#learnMessage').textContent=''; $('#learnMessage').style.display='none'; } } else { playTone(180,.22,'sawtooth',.035); $('[data-flow="q1"]').classList.add('wrong'); $('#learnMessage').className='flow-message wrong'; $('#learnMessage').textContent=`Not quite. ${r.Salt} is ${soluble?'soluble':'insoluble'} in water.`; } return; } if(learnStep===2) { const group=isGroup1OrAmmonium(c); if(answer===group) { $('[data-flow="q2"]').classList.add('correct'); $('#learnGroupBadge').textContent=group?'Group 1 / NH₄⁺: Yes':'Group 1 / NH₄⁺: No'; $('#learnGroupBadge').className=`badge ${group?'mid':'good'}`; setLearnOptionVisibility(false,false); finishLearn(group?'titration':'excess', group?'Correct. Soluble Group 1 or ammonium salts use titration.':'Correct. It is soluble but not Group 1 or ammonium, so use excess solid with acid.'); goodSound(); } else { playTone(180,.22,'sawtooth',.035); $('[data-flow="q2"]').classList.add('wrong'); $('#learnMessage').className='flow-message wrong'; $('#learnMessage').textContent=`Not quite. The cation is ${c}, so the answer is ${group?'Yes':'No'}.`; } } }
+function finishLearn(method,msg) { ['precipitation','titration','excess'].forEach(k=>{ const node=$(`[data-flow="${k}"]`); node.classList.toggle('active',k===method); node.classList.toggle('dim',k!==method); }); $('#learnMessage').className='flow-message correct'; $('#learnMessage').textContent=msg; setLearnOptionVisibility(false,false); updateLearnDetail(method); }
+function showLearnRoute() { const r=currentLearnRecord(); const c=$('#learnCationSelect').value; const method=methodKey(r); clearFlowNodes(); $('[data-flow="q1"]').classList.add('active','correct'); if(r['Is it soluble?']==='Yes') $('[data-flow="q2"]').classList.add('active','correct'); ['precipitation','titration','excess'].forEach(k=>{ const node=$(`[data-flow="${k}"]`); node.classList.toggle('active',k===method); node.classList.toggle('dim',k!==method); }); $('#learnSolubilityBadge').textContent=`Soluble: ${safeText(r['Is it soluble?'])}`; $('#learnSolubilityBadge').className=`badge ${r['Is it soluble?']==='Yes'?'good':'bad'}`; $('#learnGroupBadge').textContent=`Group 1 / NH₄⁺: ${isGroup1OrAmmonium(c)?'Yes':'No'}`; $('#learnGroupBadge').className=`badge ${isGroup1OrAmmonium(c)?'mid':'good'}`; $('#learnMessage').className='flow-message correct'; $('#learnMessage').textContent=`Route shown. Correct method: ${safeText(r['Method of preparation'])}.`; $('#learnMessage').style.display='block'; setLearnOptionVisibility(false,false); updateLearnDetail(method); goodSound(); }
+function updateLearnDetail(method) { const r=currentLearnRecord(); if(!method) { $('#learnMethodDetail').innerHTML='<strong>Method details</strong>Answer the questions or click Show route.'; return; } $('#learnMethodDetail').innerHTML=`<div class="learn-detail-grid"><div><strong>${METHOD_LABEL[method] || safeText(r['Method of preparation'])}</strong><b>Reagents:</b> ${safeText(r['Reagent 1'])} + ${safeText(r['Reagent 2'])}<br><b>Chemical equation:</b> ${safeText(r['Chemical Equation'])}<br><b>Ionic equation:</b> ${safeText(r['Ionic Equation'])}</div><img class="method-image" src="${METHOD_IMG[method]}" alt="${METHOD_LABEL[method]} method card"></div>`; }
+
+document.addEventListener('DOMContentLoaded',()=>{ initTabs(); initChecker(); initScores(); initQuiz(); initLearn(); });
+</script>
+</body>
+</html>
